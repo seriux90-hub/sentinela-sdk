@@ -3,6 +3,7 @@
 namespace Sentinela\LaravelClient;
 
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Sentinela\LaravelClient\Support\PayloadSigner;
@@ -11,6 +12,8 @@ use Throwable;
 
 class SentinelaClient
 {
+    private const CIRCUIT_CACHE_KEY = 'sentinela:circuit-open';
+
     public function __construct(
         private ConfigRepository $config,
         private PiiScrubber $scrubber,
@@ -86,7 +89,23 @@ class SentinelaClient
     /** @param  array<string, mixed>  $payload */
     private function send(array $payload): void
     {
+        if ($this->isCircuitOpen()) {
+            $this->debugLog('circuito abierto: se omite el envío (fallos de red recientes hacia Sentinela)');
+
+            return;
+        }
+
         $body = json_encode($payload);
+
+        if ($body === false) {
+            // Un contexto no serializable (recursos, objetos raros, UTF-8
+            // inválido...) no debe intentar enviarse como texto literal
+            // "false" — se descarta el evento y se registra en debug.
+            $this->debugLog('no se pudo serializar el payload a JSON', ['error' => json_last_error_msg()]);
+
+            return;
+        }
+
         $headers = ['Content-Type' => 'application/json', 'X-API-Key' => $this->config->get('sentinela.api_key')];
 
         $secret = $this->config->get('sentinela.signing_secret');
@@ -123,6 +142,53 @@ class SentinelaClient
                 }
             }
         }
+
+        // Todos los intentos fallaron por red (nunca por una respuesta HTTP,
+        // esos casos ya han hecho return arriba): Sentinela probablemente
+        // esté caída o inalcanzable. Abrimos el circuito para no repetir el
+        // timeout completo en cada log que ocurra durante los próximos
+        // segundos — evita que una caída de Sentinela ralentice la app.
+        $this->openCircuit();
+    }
+
+    /**
+     * El propio driver de caché de la app (Redis, memcached...) podría estar
+     * caído a la vez que Sentinela, o fallar por cualquier otro motivo — el
+     * circuit breaker es una optimización, nunca debe ser el motivo por el
+     * que capture() incumple su promesa de no lanzar nunca.
+     */
+    private function isCircuitOpen(): bool
+    {
+        if ($this->circuitBreakerSeconds() <= 0) {
+            return false;
+        }
+
+        try {
+            return (bool) Cache::get(self::CIRCUIT_CACHE_KEY, false);
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    private function openCircuit(): void
+    {
+        $seconds = $this->circuitBreakerSeconds();
+
+        if ($seconds <= 0) {
+            return;
+        }
+
+        try {
+            Cache::put(self::CIRCUIT_CACHE_KEY, true, $seconds);
+        } catch (Throwable) {
+            // No pasa nada: en el peor caso, el próximo log intenta la
+            // conexión de nuevo en vez de aprovechar el circuit breaker.
+        }
+    }
+
+    private function circuitBreakerSeconds(): int
+    {
+        return (int) $this->config->get('sentinela.circuit_breaker_seconds', 30);
     }
 
     private function passesSample(): bool

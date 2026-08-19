@@ -37,4 +37,24 @@ class LogChannelTest extends TestCase
 
         Http::assertNothingSent();
     }
+
+    public function test_the_configured_level_is_case_insensitive(): void
+    {
+        Http::fake(['sentinela.test/*' => Http::response('', 200)]);
+        config(['logging.channels.sentinela.level' => 'ERROR']);
+
+        Log::channel('sentinela')->error('mayúsculas en la config');
+
+        Http::assertSent(fn (Request $request) => $request['message'] === 'mayúsculas en la config');
+    }
+
+    public function test_an_invalid_level_falls_back_to_error_instead_of_crashing(): void
+    {
+        Http::fake(['sentinela.test/*' => Http::response('', 200)]);
+        config(['logging.channels.sentinela.level' => 'not-a-real-level']);
+
+        Log::channel('sentinela')->error('no debe romper la resolución del canal');
+
+        Http::assertSent(fn (Request $request) => $request['message'] === 'no debe romper la resolución del canal');
+    }
 }

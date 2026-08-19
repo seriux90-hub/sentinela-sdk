@@ -19,5 +19,7 @@ abstract class TestCase extends OrchestraTestCase
         $app['config']->set('sentinela.endpoint', 'https://sentinela.test');
         $app['config']->set('sentinela.signing_secret', 'test-signing-secret');
         $app['config']->set('sentinela.retries', 0);
+        $app['config']->set('sentinela.circuit_breaker_seconds', 30);
+        $app['config']->set('cache.default', 'array');
     }
 }

@@ -73,14 +73,30 @@ return [
     |--------------------------------------------------------------------
     | timeout: segundos de espera máxima por petición HTTP al endpoint.
     | retries: reintentos ante fallo de red/timeout (no ante 4xx: esos no
-    | se reintentan, el servidor ya ha decidido).
+    | se reintentan, el servidor ya ha decidido). Por defecto 0: capture()
+    | suele ejecutarse en mitad de una petición real del usuario (p. ej. al
+    | reportar una excepción), así que cada reintento añade timeout+backoff
+    | de espera SÍNCRONA a esa respuesta. Sólo súbelo si tienes claro que
+    | asumes ese coste (o si llamas a Sentinela desde un job en cola).
     | retry_backoff_ms: espera entre reintentos, en milisegundos.
     */
     'timeout' => (float) env('SENTINELA_TIMEOUT', 2.0),
 
-    'retries' => (int) env('SENTINELA_RETRIES', 1),
+    'retries' => (int) env('SENTINELA_RETRIES', 0),
 
     'retry_backoff_ms' => (int) env('SENTINELA_RETRY_BACKOFF_MS', 100),
+
+    /*
+    |--------------------------------------------------------------------
+    | Circuit breaker
+    |--------------------------------------------------------------------
+    | Si el envío falla por red (timeout, conexión rechazada...), se deja
+    | de intentar durante esta cantidad de segundos — evita que una caída
+    | de Sentinela añada el timeout completo a cada log que ocurra mientras
+    | tanto. 0 desactiva el circuit breaker (siempre lo intenta). Usa el
+    | driver de caché por defecto de la app (config/cache.php).
+    */
+    'circuit_breaker_seconds' => (int) env('SENTINELA_CIRCUIT_BREAKER_SECONDS', 30),
 
     /*
     |--------------------------------------------------------------------

@@ -11,7 +11,7 @@ use Sentinela\LaravelClient\Support\PiiScrubber;
 
 class SentinelaServiceProvider extends ServiceProvider
 {
-    public const VERSION = '0.1.0';
+    public const VERSION = '0.2.0';
 
     public function register(): void
     {

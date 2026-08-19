@@ -25,8 +25,28 @@ class SentinelaLogChannelFactory
         $level = $config['level'] ?? config('sentinela.min_level', 'error');
 
         $logger = new Logger('sentinela');
-        $logger->pushHandler(new SentinelaLogHandler($client, Level::fromName(ucfirst($level))));
+        $logger->pushHandler(new SentinelaLogHandler($client, $this->resolveLevel($level)));
 
         return $logger;
+    }
+
+    /**
+     * Level::fromName() espera el nombre del caso del enum tal cual
+     * (p. ej. "Error", no "error" ni "ERROR") y lanza ValueError si no
+     * coincide exactamente. Un valor de config mal escrito no debe tumbar
+     * el arranque de la app entera, así que normalizamos la mayús/minús y
+     * caemos a Error si aun así no es un nivel válido.
+     */
+    private function resolveLevel(mixed $level): Level
+    {
+        if ($level instanceof Level) {
+            return $level;
+        }
+
+        try {
+            return Level::fromName(ucfirst(strtolower((string) $level)));
+        } catch (\ValueError|\UnhandledMatchError) {
+            return Level::Error;
+        }
     }
 }
