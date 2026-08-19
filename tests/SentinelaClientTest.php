@@ -153,8 +153,14 @@ class SentinelaClientTest extends TestCase
     {
         Http::fake();
 
-        // Una cadena con bytes inválidos en UTF-8 hace fallar json_encode().
-        Sentinela::capture('error', "bad utf8 \xB1\x31");
+        // NAN/INF son los únicos valores que json_encode() rechaza de forma
+        // determinista en cualquier versión de PHP (JSON_ERROR_INF_OR_NAN).
+        // Una cadena con bytes UTF-8 inválidos NO sirve para este test: PHP
+        // 8.2 y 8.3 sanean mb_substr() de forma distinta antes de llegar a
+        // json_encode(), así que a veces sí es codificable y el test es
+        // inestable entre versiones (así se detectó, con CI en verde en 8.2
+        // y en rojo en 8.3 para el mismo commit).
+        Sentinela::capture('error', 'x', ['bad' => NAN]);
 
         Http::assertNothingSent();
     }
