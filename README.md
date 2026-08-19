@@ -140,7 +140,7 @@ emails aunque la clave no lo delate.
 
 ## Requisitos
 
-PHP 8.1+ y Laravel 10, 11 o 12.
+PHP 8.2+ y Laravel 11 o 12.
 
 ## Tests
 
