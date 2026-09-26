@@ -10,6 +10,9 @@ follows [SemVer](https://semver.org/).
 - Laravel 13 support: `illuminate/support` and `illuminate/contracts` now
   accept `^13.0`. Previously the package could not be installed at all in a
   fresh `laravel/laravel` app, which ships with Laravel 13.
+- `guzzlehttp/guzzle` now accepts `^8.0` as well: new Laravel 13 apps ship
+  with Guzzle 8, which also blocked installation. The package only uses
+  Laravel's `Http` facade, never Guzzle directly.
 - `Sentinela::captureBatch(array $events)`: sends many events in a single
   request to `POST /api/logs/batch`, signed like `capture()`. Splits into
   chunks of 500 (the server limit), applies sampling and PII scrubbing per
