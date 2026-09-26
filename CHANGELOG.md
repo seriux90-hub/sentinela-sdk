@@ -4,6 +4,21 @@ All notable changes to this package are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and versioning
 follows [SemVer](https://semver.org/).
 
+## [0.3.0] - 2026-09-26
+
+### Added
+- Laravel 13 support: `illuminate/support` and `illuminate/contracts` now
+  accept `^13.0`. Previously the package could not be installed at all in a
+  fresh `laravel/laravel` app, which ships with Laravel 13.
+- `Sentinela::captureBatch(array $events)`: sends many events in a single
+  request to `POST /api/logs/batch`, signed like `capture()`. Splits into
+  chunks of 500 (the server limit), applies sampling and PII scrubbing per
+  event, drops events missing `level`/`message`, and keeps the same
+  never-throw / `dry_run` / circuit-breaker guarantees.
+
+### Changed
+- CI now also runs against Laravel 13 (PHP 8.3).
+
 ## [0.2.0] - 2026-08-19
 
 ### Added

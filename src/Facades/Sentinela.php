@@ -7,6 +7,7 @@ use Sentinela\LaravelClient\SentinelaClient;
 
 /**
  * @method static void capture(string $level, string $message, array $context = [])
+ * @method static void captureBatch(array $events)
  * @method static void reportException(\Throwable $e)
  * @method static bool isConfigured()
  *

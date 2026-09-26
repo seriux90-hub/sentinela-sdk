@@ -1,7 +1,7 @@
 name: tests
 
-# Sólo se testea Laravel 12.x: Packagist marca con avisos de seguridad TODAS
-# las versiones de laravel/framework por debajo de la 12.60 (CVE-2026-48019),
+# Se testean Laravel 12.x y 13.x. No se testea Laravel 11: Packagist marca
+# con avisos de seguridad TODAS las versiones de laravel/framework por debajo de la 12.60 (CVE-2026-48019),
 # así que Composer no puede resolver una instalación limpia de Laravel 10/11
 # en un runner con una versión reciente de Composer. El paquete declara
 # soporte para Laravel 11 en composer.json (nada en el código es
@@ -20,8 +20,13 @@ jobs:
       fail-fast: false
       matrix:
         php: [8.2, 8.3]
+        laravel: ['12.*']
+        include:
+          # Laravel 13 exige PHP 8.3+.
+          - php: 8.3
+            laravel: '13.*'
 
-    name: PHP ${{ matrix.php }} — Laravel 12.*
+    name: PHP ${{ matrix.php }} — Laravel ${{ matrix.laravel }}
 
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +39,9 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        run: composer update --prefer-dist --no-interaction --no-progress
+        run: |
+          composer require "illuminate/support:${{ matrix.laravel }}" "illuminate/contracts:${{ matrix.laravel }}" --no-interaction --no-update
+          composer update --prefer-dist --no-interaction --no-progress --with-all-dependencies
 
       - name: Run tests
         run: vendor/bin/phpunit

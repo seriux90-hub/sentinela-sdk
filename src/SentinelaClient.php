@@ -14,6 +14,9 @@ class SentinelaClient
 {
     private const CIRCUIT_CACHE_KEY = 'sentinela:circuit-open';
 
+    /** Máximo de eventos que acepta el servidor en una sola petición de lote. */
+    public const MAX_BATCH_SIZE = 500;
+
     public function __construct(
         private ConfigRepository $config,
         private PiiScrubber $scrubber,
@@ -46,7 +49,52 @@ class SentinelaClient
             return;
         }
 
-        $this->send($payload);
+        $this->send('/api/logs', $payload);
+    }
+
+    /**
+     * Envía varios eventos en una sola petición a POST /api/logs/batch (troceando
+     * en lotes de MAX_BATCH_SIZE si hace falta). Mismo contrato que capture():
+     * nunca lanza, respeta dry_run, circuit breaker y PII scrubbing. El
+     * sampling se aplica por evento, igual que si se llamase a capture() uno a
+     * uno. Los eventos sin level o message válidos se descartan.
+     *
+     * @param  array<int, array{level: string, message: string, context?: array<string, mixed>}>  $events
+     */
+    public function captureBatch(array $events): void
+    {
+        if (! $this->isConfigured()) {
+            return;
+        }
+
+        $payloads = [];
+
+        foreach ($events as $event) {
+            if (! is_array($event)
+                || ! is_string($event['level'] ?? null)
+                || ! is_string($event['message'] ?? null)) {
+                $this->debugLog('evento de lote descartado: falta level o message');
+
+                continue;
+            }
+
+            if (! $this->passesSample()) {
+                continue;
+            }
+
+            $context = $event['context'] ?? [];
+            $payloads[] = $this->buildPayload($event['level'], $event['message'], is_array($context) ? $context : []);
+        }
+
+        foreach (array_chunk($payloads, self::MAX_BATCH_SIZE) as $chunk) {
+            if ($this->config->get('sentinela.dry_run', false)) {
+                $this->debugLog('dry-run: lote no enviado', ['count' => count($chunk), 'logs' => $chunk]);
+
+                continue;
+            }
+
+            $this->send('/api/logs/batch', ['logs' => $chunk]);
+        }
     }
 
     /**
@@ -87,7 +135,7 @@ class SentinelaClient
     }
 
     /** @param  array<string, mixed>  $payload */
-    private function send(array $payload): void
+    private function send(string $path, array $payload): void
     {
         if ($this->isCircuitOpen()) {
             $this->debugLog('circuito abierto: se omite el envío (fallos de red recientes hacia Sentinela)');
@@ -114,7 +162,7 @@ class SentinelaClient
         }
 
         $attempts = 1 + max(0, (int) $this->config->get('sentinela.retries', 1));
-        $endpoint = rtrim($this->config->get('sentinela.endpoint'), '/').'/api/logs';
+        $endpoint = rtrim($this->config->get('sentinela.endpoint'), '/').$path;
 
         for ($attempt = 1; $attempt <= $attempts; $attempt++) {
             try {

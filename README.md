@@ -49,6 +49,24 @@ use Sentinela\LaravelClient\Facades\Sentinela;
 Sentinela::capture('warning', 'Low stock', ['product_id' => 42, 'stock' => 3]);
 ```
 
+### Batch capture
+
+When you have many events at once (imports, queued jobs, high-volume apps),
+send them in a single request to `POST /api/logs/batch` instead of one HTTP
+call per event:
+
+```php
+Sentinela::captureBatch([
+    ['level' => 'info', 'message' => 'Import started'],
+    ['level' => 'warning', 'message' => 'Row skipped', 'context' => ['row' => 17]],
+]);
+```
+
+Same guarantees as `capture()`: it never throws, and it honours `dry_run`,
+the circuit breaker and PII scrubbing. Sampling is applied per event.
+Batches larger than 500 events (the server limit) are split automatically,
+and events missing `level` or `message` are dropped.
+
 ### Unhandled exceptions — automatic
 
 By default, **you don't have to do anything**: the package listens to the
@@ -164,7 +182,7 @@ that look like card numbers or emails even when the key doesn't give it away.
 
 ## Requirements
 
-PHP 8.2+ and Laravel 11 or 12.
+PHP 8.2+ and Laravel 11, 12 or 13 (Laravel 13 itself requires PHP 8.3+).
 
 ## Tests
 
