@@ -4,6 +4,26 @@ All notable changes to this package are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and versioning
 follows [SemVer](https://semver.org/).
 
+## [0.4.0] - 2026-10-01
+
+### Changed (breaking)
+- The product was renamed from Sentinela to **Nocwise**, and every public
+  identifier of the package follows the new name. Upgrading from 0.3 means
+  replacing the package and updating your `.env` and config:
+
+  | Before (0.3) | Now (0.4) |
+  | --- | --- |
+  | `sentinela/laravel-client` | `nocwise/laravel-client` |
+  | `Sentinela\LaravelClient\…` | `Nocwise\LaravelClient\…` |
+  | `config/sentinela.php` (tag `sentinela-config`) | `config/nocwise.php` (tag `nocwise-config`) |
+  | `SENTINELA_*` env variables | `NOCWISE_*` env variables |
+  | `sentinela` log channel in the README examples | `nocwise` log channel |
+  | `php artisan sentinela:test` | `php artisan nocwise:test` |
+  | `X-Sentinela-Signature` / `-Timestamp` / `-Nonce` headers | `X-Nocwise-Signature` / `-Timestamp` / `-Nonce` |
+
+- The signature headers changed name, so 0.4 only works against a Nocwise
+  server that expects `X-Nocwise-*`. A Sentinela server rejects its requests.
+
 ## [0.3.0] - 2026-09-26
 
 ### Added

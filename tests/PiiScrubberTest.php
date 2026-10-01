@@ -1,8 +1,8 @@
 <?php
 
-namespace Sentinela\LaravelClient\Tests;
+namespace Nocwise\LaravelClient\Tests;
 
-use Sentinela\LaravelClient\Support\PiiScrubber;
+use Nocwise\LaravelClient\Support\PiiScrubber;
 
 class PiiScrubberTest extends TestCase
 {

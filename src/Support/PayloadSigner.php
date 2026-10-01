@@ -1,6 +1,6 @@
 <?php
 
-namespace Sentinela\LaravelClient\Support;
+namespace Nocwise\LaravelClient\Support;
 
 class PayloadSigner
 {
@@ -15,7 +15,7 @@ class PayloadSigner
      * untrusted y conoce el secreto, así que la decisión de aceptar o no
      * el evento la toma siempre el servidor (suscripción, cuota, etc.).
      *
-     * @return array{'X-Sentinela-Timestamp': string, 'X-Sentinela-Nonce': string, 'X-Sentinela-Signature': string}
+     * @return array{'X-Nocwise-Timestamp': string, 'X-Nocwise-Nonce': string, 'X-Nocwise-Signature': string}
      */
     public function headersFor(string $jsonBody, string $secret): array
     {
@@ -23,9 +23,9 @@ class PayloadSigner
         $nonce = bin2hex(random_bytes(16));
 
         return [
-            'X-Sentinela-Timestamp' => $timestamp,
-            'X-Sentinela-Nonce' => $nonce,
-            'X-Sentinela-Signature' => $this->sign($jsonBody, $timestamp, $nonce, $secret),
+            'X-Nocwise-Timestamp' => $timestamp,
+            'X-Nocwise-Nonce' => $nonce,
+            'X-Nocwise-Signature' => $this->sign($jsonBody, $timestamp, $nonce, $secret),
         ];
     }
 

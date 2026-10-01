@@ -1,14 +1,14 @@
 <?php
 
-namespace Sentinela\LaravelClient\Support;
+namespace Nocwise\LaravelClient\Support;
 
 class PiiScrubber
 {
     private const REDACTED = '[redacted]';
 
     /**
-     * @param  array<string, mixed>  $keys de config('sentinela.scrub_keys') como lista simple ['password', ...]
-     * @param  array<string, string>  $valuePatterns nombre => regex, de config('sentinela.scrub_value_patterns')
+     * @param  array<string, mixed>  $keys de config('nocwise.scrub_keys') como lista simple ['password', ...]
+     * @param  array<string, string>  $valuePatterns nombre => regex, de config('nocwise.scrub_value_patterns')
      */
     public function __construct(
         private array $keys,

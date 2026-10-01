@@ -1,42 +1,42 @@
-# Sentinela — Official Laravel Client
+# Nocwise — Official Laravel Client
 
-[![Tests](https://github.com/seriux90-hub/sentinela-sdk/actions/workflows/tests.yml/badge.svg)](https://github.com/seriux90-hub/sentinela-sdk/actions/workflows/tests.yml)
-[![Latest Version](https://img.shields.io/packagist/v/sentinela/laravel-client.svg)](https://packagist.org/packages/sentinela/laravel-client)
-[![License](https://img.shields.io/packagist/l/sentinela/laravel-client.svg)](LICENSE)
+[![Tests](https://github.com/seriux90-hub/nocwise-sdk/actions/workflows/tests.yml/badge.svg)](https://github.com/seriux90-hub/nocwise-sdk/actions/workflows/tests.yml)
+[![Latest Version](https://img.shields.io/packagist/v/nocwise/laravel-client.svg)](https://packagist.org/packages/nocwise/laravel-client)
+[![License](https://img.shields.io/packagist/l/nocwise/laravel-client.svg)](LICENSE)
 
 Captures logs and unhandled exceptions from your Laravel app and sends them
-to your [Sentinela](https://github.com/seriux90-hub/sentinela) instance.
-Built to never break or slow down your app: if Sentinela doesn't respond,
+to your [Nocwise](https://github.com/seriux90-hub/nocwise) instance.
+Built to never break or slow down your app: if Nocwise doesn't respond,
 your application doesn't even notice.
 
 ## Installation
 
 ```bash
-composer require sentinela/laravel-client
+composer require nocwise/laravel-client
 ```
 
 Publish the config:
 
 ```bash
-php artisan vendor:publish --tag=sentinela-config
+php artisan vendor:publish --tag=nocwise-config
 ```
 
 Add to your `.env`:
 
 ```
-SENTINELA_KEY=your-project-api-key
-SENTINELA_URL=https://your-sentinela-instance.com
-SENTINELA_SIGNING_SECRET=your-signing-secret
+NOCWISE_KEY=your-project-api-key
+NOCWISE_URL=https://your-nocwise-instance.com
+NOCWISE_SIGNING_SECRET=your-signing-secret
 ```
 
-You'll find `SENTINELA_KEY` and `SENTINELA_SIGNING_SECRET` on your Sentinela
-project, under **Integrations**. `SENTINELA_URL` is the URL of your instance
-(each Sentinela client has their own, which is why it's configurable).
+You'll find `NOCWISE_KEY` and `NOCWISE_SIGNING_SECRET` on your Nocwise
+project, under **Integrations**. `NOCWISE_URL` is the URL of your instance
+(each Nocwise client has their own, which is why it's configurable).
 
 Check that everything works:
 
 ```bash
-php artisan sentinela:test
+php artisan nocwise:test
 ```
 
 ## Usage
@@ -44,9 +44,9 @@ php artisan sentinela:test
 ### Manual capture
 
 ```php
-use Sentinela\LaravelClient\Facades\Sentinela;
+use Nocwise\LaravelClient\Facades\Nocwise;
 
-Sentinela::capture('warning', 'Low stock', ['product_id' => 42, 'stock' => 3]);
+Nocwise::capture('warning', 'Low stock', ['product_id' => 42, 'stock' => 3]);
 ```
 
 ### Batch capture
@@ -56,7 +56,7 @@ send them in a single request to `POST /api/logs/batch` instead of one HTTP
 call per event:
 
 ```php
-Sentinela::captureBatch([
+Nocwise::captureBatch([
     ['level' => 'info', 'message' => 'Import started'],
     ['level' => 'warning', 'message' => 'Row skipped', 'context' => ['row' => 17]],
 ]);
@@ -76,16 +76,16 @@ there's no custom reporter for that exception).
 
 If you'd rather disable automatic forwarding and capture explicitly yourself
 (for example, to filter which exceptions actually get sent), set
-`SENTINELA_REPORT_EXCEPTIONS=false` and hook in manually in
+`NOCWISE_REPORT_EXCEPTIONS=false` and hook in manually in
 `bootstrap/app.php`:
 
 ```php
 use Illuminate\Foundation\Configuration\Exceptions;
-use Sentinela\LaravelClient\Facades\Sentinela;
+use Nocwise\LaravelClient\Facades\Nocwise;
 
 ->withExceptions(function (Exceptions $exceptions) {
     $exceptions->report(function (Throwable $e) {
-        Sentinela::reportException($e);
+        Nocwise::reportException($e);
     });
 })
 ```
@@ -96,72 +96,72 @@ Add the channel to `config/logging.php`:
 
 ```php
 'channels' => [
-    'sentinela' => [
+    'nocwise' => [
         'driver' => 'custom',
-        'via' => \Sentinela\LaravelClient\Logging\SentinelaLogChannelFactory::class,
+        'via' => \Nocwise\LaravelClient\Logging\NocwiseLogChannelFactory::class,
         'level' => 'error',
     ],
 ],
 ```
 
-And add it to your stack (`LOG_STACK=stack,sentinela` in `.env`, or directly
-in the config) so any `Log::error(...)` in your app also reaches Sentinela.
+And add it to your stack (`LOG_STACK=stack,nocwise` in `.env`, or directly
+in the config) so any `Log::error(...)` in your app also reaches Nocwise.
 
 ## Configuration
 
-All options live in `config/sentinela.php` once published. The most relevant
+All options live in `config/nocwise.php` once published. The most relevant
 ones:
 
 | Variable | Default | What it does |
 |---|---|---|
-| `SENTINELA_ENABLED` | `true` | Turns the package off entirely (no-op) without uninstalling it |
-| `SENTINELA_MIN_LEVEL` | `error` | Minimum level captured by the logging channel |
-| `SENTINELA_SAMPLE_RATE` | `1.0` | Fraction of events actually sent (0.0–1.0), to avoid burning through your quota on very noisy apps |
-| `SENTINELA_DEBUG` | `false` | Logs what the client is doing to your local log |
-| `SENTINELA_DRY_RUN` | `false` | Builds the payload but doesn't send it — for testing the config without spending quota |
-| `SENTINELA_TIMEOUT` / `SENTINELA_RETRIES` | `2.0` / `0` | Per-request timeout and retries on network failure (never on a 4xx: the server has already decided) |
-| `SENTINELA_CIRCUIT_BREAKER_SECONDS` | `30` | After a network failure, stop trying to reach Sentinela for this many seconds — avoids adding a full timeout to every single log call while Sentinela is down. `0` disables it |
+| `NOCWISE_ENABLED` | `true` | Turns the package off entirely (no-op) without uninstalling it |
+| `NOCWISE_MIN_LEVEL` | `error` | Minimum level captured by the logging channel |
+| `NOCWISE_SAMPLE_RATE` | `1.0` | Fraction of events actually sent (0.0–1.0), to avoid burning through your quota on very noisy apps |
+| `NOCWISE_DEBUG` | `false` | Logs what the client is doing to your local log |
+| `NOCWISE_DRY_RUN` | `false` | Builds the payload but doesn't send it — for testing the config without spending quota |
+| `NOCWISE_TIMEOUT` / `NOCWISE_RETRIES` | `2.0` / `0` | Per-request timeout and retries on network failure (never on a 4xx: the server has already decided) |
+| `NOCWISE_CIRCUIT_BREAKER_SECONDS` | `30` | After a network failure, stop trying to reach Nocwise for this many seconds — avoids adding a full timeout to every single log call while Nocwise is down. `0` disables it |
 
-The package is a **no-op** if `SENTINELA_KEY` or `SENTINELA_URL` is missing,
-or if `SENTINELA_ENABLED=false` — it never throws or blocks your app.
+The package is a **no-op** if `NOCWISE_KEY` or `NOCWISE_URL` is missing,
+or if `NOCWISE_ENABLED=false` — it never throws or blocks your app.
 
 `capture()` typically runs synchronously in the middle of a real request
 (e.g. right when an exception is reported), so retries default to `0`: each
 retry adds a full `timeout` + `retry_backoff_ms` of *blocking* wait to that
 response. Only raise it if you're fine with that cost, or if you call
-Sentinela from a queued job instead. Either way, after a network failure the
+Nocwise from a queued job instead. Either way, after a network failure the
 circuit breaker keeps the client from retrying on every subsequent log for
-`SENTINELA_CIRCUIT_BREAKER_SECONDS` — an outage on the Sentinela side won't
+`NOCWISE_CIRCUIT_BREAKER_SECONDS` — an outage on the Nocwise side won't
 slow your app down beyond the first failed attempt.
 
-> ⚠️ If you both add the `sentinela` channel to your `LOG_STACK` **and**
-> leave automatic exception forwarding enabled (`SENTINELA_REPORT_EXCEPTIONS`,
+> ⚠️ If you both add the `nocwise` channel to your `LOG_STACK` **and**
+> leave automatic exception forwarding enabled (`NOCWISE_REPORT_EXCEPTIONS`,
 > on by default), an unhandled exception will be reported **twice** — once
 > by the log channel handler, once by the `MessageLogged` listener. Pick one:
-> either use the log channel and set `SENTINELA_REPORT_EXCEPTIONS=false`, or
-> keep automatic forwarding and don't add `sentinela` to the stack.
+> either use the log channel and set `NOCWISE_REPORT_EXCEPTIONS=false`, or
+> keep automatic forwarding and don't add `nocwise` to the stack.
 
 ### Privacy — PII scrubbing
 
 Before sending any event, context keys matching `scrub_keys` in
-`config/sentinela.php` (`password`, `token`, `api_key`, `credit_card`... —
+`config/nocwise.php` (`password`, `token`, `api_key`, `credit_card`... —
 editable list) are redacted (`[redacted]`), recursively through nested
 arrays. You can also define `scrub_value_patterns` (regex) to redact values
 that look like card numbers or emails even when the key doesn't give it away.
 
 ```php
-// config/sentinela.php
+// config/nocwise.php
 'scrub_keys' => ['password', 'token', 'ssn', /* ... */],
 ```
 
 ## Security
 
-- **HTTPS only.** Never expose `SENTINELA_KEY` or `SENTINELA_SIGNING_SECRET`
+- **HTTPS only.** Never expose `NOCWISE_KEY` or `NOCWISE_SIGNING_SECRET`
   in the frontend — this package runs server-side.
 - Every request includes the project's API key (`X-API-Key`) and, if you've
-  configured `SENTINELA_SIGNING_SECRET`, an **HMAC-SHA256 signature** of the
-  body (`X-Sentinela-Signature`) along with a timestamp and a nonce
-  (`X-Sentinela-Timestamp`, `X-Sentinela-Nonce`) that the server uses to
+  configured `NOCWISE_SIGNING_SECRET`, an **HMAC-SHA256 signature** of the
+  body (`X-Nocwise-Signature`) along with a timestamp and a nonce
+  (`X-Nocwise-Timestamp`, `X-Nocwise-Nonce`) that the server uses to
   reject old timestamps and repeated nonces (anti-replay).
 - **Important:** the signature provides message *integrity* and anti-replay
   protection — it does **not** authorize the request on its own. This
@@ -169,7 +169,7 @@ that look like card numbers or emails even when the key doesn't give it away.
   signs. The real decision to accept or reject ingestion (active
   subscription, plan quota, paused project...) is **always made by the
   server**. A leaked secret lets someone forge a valid signature, but it
-  doesn't bypass that check — that's the Sentinela instance's job.
+  doesn't bypass that check — that's the Nocwise instance's job.
 - **Stack traces can contain argument values.** PHP's
   `Throwable::getTraceAsString()` includes up to 15 characters of each
   scalar argument passed to the functions in the trace — if a password or
@@ -177,7 +177,7 @@ that look like card numbers or emails even when the key doesn't give it away.
   fragment of it can end up in the reported `trace`. `scrub_key`-based
   redaction only matches array *keys*, which a raw trace string doesn't
   have; if this is a concern for your app, configure
-  `scrub_value_patterns` in `config/sentinela.php` to redact matching
+  `scrub_value_patterns` in `config/nocwise.php` to redact matching
   substrings in every string value sent, trace included.
 
 ## Requirements

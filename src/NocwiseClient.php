@@ -1,18 +1,18 @@
 <?php
 
-namespace Sentinela\LaravelClient;
+namespace Nocwise\LaravelClient;
 
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Sentinela\LaravelClient\Support\PayloadSigner;
-use Sentinela\LaravelClient\Support\PiiScrubber;
+use Nocwise\LaravelClient\Support\PayloadSigner;
+use Nocwise\LaravelClient\Support\PiiScrubber;
 use Throwable;
 
-class SentinelaClient
+class NocwiseClient
 {
-    private const CIRCUIT_CACHE_KEY = 'sentinela:circuit-open';
+    private const CIRCUIT_CACHE_KEY = 'nocwise:circuit-open';
 
     /** Máximo de eventos que acepta el servidor en una sola petición de lote. */
     public const MAX_BATCH_SIZE = 500;
@@ -25,7 +25,7 @@ class SentinelaClient
     }
 
     /**
-     * Envía un evento a Sentinela. Nunca lanza — cualquier fallo (red,
+     * Envía un evento a Nocwise. Nunca lanza — cualquier fallo (red,
      * timeout, respuesta de error) se traga en silencio (o se loguea en
      * modo debug) para no romper ni ralentizar la app del cliente.
      *
@@ -43,7 +43,7 @@ class SentinelaClient
 
         $payload = $this->buildPayload($level, $message, $context);
 
-        if ($this->config->get('sentinela.dry_run', false)) {
+        if ($this->config->get('nocwise.dry_run', false)) {
             $this->debugLog('dry-run: evento no enviado', $payload);
 
             return;
@@ -87,7 +87,7 @@ class SentinelaClient
         }
 
         foreach (array_chunk($payloads, self::MAX_BATCH_SIZE) as $chunk) {
-            if ($this->config->get('sentinela.dry_run', false)) {
+            if ($this->config->get('nocwise.dry_run', false)) {
                 $this->debugLog('dry-run: lote no enviado', ['count' => count($chunk), 'logs' => $chunk]);
 
                 continue;
@@ -112,9 +112,9 @@ class SentinelaClient
 
     public function isConfigured(): bool
     {
-        return $this->config->get('sentinela.enabled', false)
-            && ! empty($this->config->get('sentinela.api_key'))
-            && ! empty($this->config->get('sentinela.endpoint'));
+        return $this->config->get('nocwise.enabled', false)
+            && ! empty($this->config->get('nocwise.api_key'))
+            && ! empty($this->config->get('nocwise.endpoint'));
     }
 
     /** @param  array<string, mixed>  $context */
@@ -125,11 +125,11 @@ class SentinelaClient
             'message' => mb_substr($message, 0, 2000),
             'context' => $this->scrubber->scrub($context),
             'occurred_at' => now()->toIso8601String(),
-            'environment' => $this->config->get('sentinela.environment', 'production'),
+            'environment' => $this->config->get('nocwise.environment', 'production'),
             'meta' => [
                 'hostname' => gethostname() ?: null,
-                'sdk' => 'sentinela/laravel-client',
-                'sdk_version' => SentinelaServiceProvider::VERSION,
+                'sdk' => 'nocwise/laravel-client',
+                'sdk_version' => NocwiseServiceProvider::VERSION,
             ],
         ];
     }
@@ -138,7 +138,7 @@ class SentinelaClient
     private function send(string $path, array $payload): void
     {
         if ($this->isCircuitOpen()) {
-            $this->debugLog('circuito abierto: se omite el envío (fallos de red recientes hacia Sentinela)');
+            $this->debugLog('circuito abierto: se omite el envío (fallos de red recientes hacia Nocwise)');
 
             return;
         }
@@ -154,20 +154,20 @@ class SentinelaClient
             return;
         }
 
-        $headers = ['Content-Type' => 'application/json', 'X-API-Key' => $this->config->get('sentinela.api_key')];
+        $headers = ['Content-Type' => 'application/json', 'X-API-Key' => $this->config->get('nocwise.api_key')];
 
-        $secret = $this->config->get('sentinela.signing_secret');
+        $secret = $this->config->get('nocwise.signing_secret');
         if (! empty($secret)) {
             $headers = array_merge($headers, $this->signer->headersFor($body, $secret));
         }
 
-        $attempts = 1 + max(0, (int) $this->config->get('sentinela.retries', 1));
-        $endpoint = rtrim($this->config->get('sentinela.endpoint'), '/').$path;
+        $attempts = 1 + max(0, (int) $this->config->get('nocwise.retries', 1));
+        $endpoint = rtrim($this->config->get('nocwise.endpoint'), '/').$path;
 
         for ($attempt = 1; $attempt <= $attempts; $attempt++) {
             try {
                 $response = Http::withHeaders($headers)
-                    ->timeout((float) $this->config->get('sentinela.timeout', 2.0))
+                    ->timeout((float) $this->config->get('nocwise.timeout', 2.0))
                     ->withBody($body, 'application/json')
                     ->post($endpoint);
 
@@ -186,22 +186,22 @@ class SentinelaClient
                 $this->debugLog('fallo de red enviando el evento', ['attempt' => $attempt, 'error' => $e->getMessage()]);
 
                 if ($attempt < $attempts) {
-                    usleep((int) $this->config->get('sentinela.retry_backoff_ms', 100) * 1000);
+                    usleep((int) $this->config->get('nocwise.retry_backoff_ms', 100) * 1000);
                 }
             }
         }
 
         // Todos los intentos fallaron por red (nunca por una respuesta HTTP,
-        // esos casos ya han hecho return arriba): Sentinela probablemente
+        // esos casos ya han hecho return arriba): Nocwise probablemente
         // esté caída o inalcanzable. Abrimos el circuito para no repetir el
         // timeout completo en cada log que ocurra durante los próximos
-        // segundos — evita que una caída de Sentinela ralentice la app.
+        // segundos — evita que una caída de Nocwise ralentice la app.
         $this->openCircuit();
     }
 
     /**
      * El propio driver de caché de la app (Redis, memcached...) podría estar
-     * caído a la vez que Sentinela, o fallar por cualquier otro motivo — el
+     * caído a la vez que Nocwise, o fallar por cualquier otro motivo — el
      * circuit breaker es una optimización, nunca debe ser el motivo por el
      * que capture() incumple su promesa de no lanzar nunca.
      */
@@ -236,12 +236,12 @@ class SentinelaClient
 
     private function circuitBreakerSeconds(): int
     {
-        return (int) $this->config->get('sentinela.circuit_breaker_seconds', 30);
+        return (int) $this->config->get('nocwise.circuit_breaker_seconds', 30);
     }
 
     private function passesSample(): bool
     {
-        $rate = (float) $this->config->get('sentinela.sample_rate', 1.0);
+        $rate = (float) $this->config->get('nocwise.sample_rate', 1.0);
 
         return $rate >= 1.0 || mt_rand() / mt_getrandmax() < $rate;
     }
@@ -253,8 +253,8 @@ class SentinelaClient
 
     private function debugLog(string $message, array $context = []): void
     {
-        if ($this->config->get('sentinela.debug', false)) {
-            Log::channel('single')->debug("[sentinela] {$message}", $context);
+        if ($this->config->get('nocwise.debug', false)) {
+            Log::channel('single')->debug("[nocwise] {$message}", $context);
         }
     }
 }

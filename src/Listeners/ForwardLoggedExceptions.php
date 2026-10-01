@@ -1,17 +1,17 @@
 <?php
 
-namespace Sentinela\LaravelClient\Listeners;
+namespace Nocwise\LaravelClient\Listeners;
 
 use Illuminate\Log\Events\MessageLogged;
 use Psr\Log\LogLevel;
-use Sentinela\LaravelClient\SentinelaClient;
+use Nocwise\LaravelClient\NocwiseClient;
 
 /**
  * Captura automática de excepciones no controladas: cuando Laravel no tiene
  * un reporter custom para una excepción, su comportamiento por defecto es
  * registrarla con Log::error($mensaje, ['exception' => $e]) — este listener
  * escucha ese evento y la reenvía, sin que el proyecto tenga que tocar
- * bootstrap/app.php. (Puede desactivarse con sentinela.report_exceptions=false).
+ * bootstrap/app.php. (Puede desactivarse con nocwise.report_exceptions=false).
  */
 class ForwardLoggedExceptions
 {
@@ -21,13 +21,13 @@ class ForwardLoggedExceptions
         LogLevel::INFO => 1, LogLevel::DEBUG => 0,
     ];
 
-    public function __construct(private SentinelaClient $client)
+    public function __construct(private NocwiseClient $client)
     {
     }
 
     public function handle(MessageLogged $event): void
     {
-        if (! config('sentinela.report_exceptions', true)) {
+        if (! config('nocwise.report_exceptions', true)) {
             return;
         }
 
@@ -44,7 +44,7 @@ class ForwardLoggedExceptions
 
     private function meetsMinLevel(string $level): bool
     {
-        $min = config('sentinela.min_level', 'error');
+        $min = config('nocwise.min_level', 'error');
 
         return (self::LEVELS[$level] ?? 0) >= (self::LEVELS[$min] ?? 4);
     }

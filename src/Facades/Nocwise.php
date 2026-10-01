@@ -1,9 +1,9 @@
 <?php
 
-namespace Sentinela\LaravelClient\Facades;
+namespace Nocwise\LaravelClient\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use Sentinela\LaravelClient\SentinelaClient;
+use Nocwise\LaravelClient\NocwiseClient;
 
 /**
  * @method static void capture(string $level, string $message, array $context = [])
@@ -11,12 +11,12 @@ use Sentinela\LaravelClient\SentinelaClient;
  * @method static void reportException(\Throwable $e)
  * @method static bool isConfigured()
  *
- * @see \Sentinela\LaravelClient\SentinelaClient
+ * @see \Nocwise\LaravelClient\NocwiseClient
  */
-class Sentinela extends Facade
+class Nocwise extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return SentinelaClient::class;
+        return NocwiseClient::class;
     }
 }

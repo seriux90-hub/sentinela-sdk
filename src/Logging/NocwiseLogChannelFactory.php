@@ -1,31 +1,31 @@
 <?php
 
-namespace Sentinela\LaravelClient\Logging;
+namespace Nocwise\LaravelClient\Logging;
 
 use Monolog\Level;
 use Monolog\Logger;
-use Sentinela\LaravelClient\SentinelaClient;
+use Nocwise\LaravelClient\NocwiseClient;
 
 /**
  * Canal de logging custom de Laravel. Añádelo a config/logging.php:
  *
- *   'sentinela' => [
+ *   'nocwise' => [
  *       'driver' => 'custom',
- *       'via' => \Sentinela\LaravelClient\Logging\SentinelaLogChannelFactory::class,
+ *       'via' => \Nocwise\LaravelClient\Logging\NocwiseLogChannelFactory::class,
  *   ],
  *
- * Y súmalo a tu "stack" (LOG_STACK=stack,sentinela en .env, o directamente
- * en la config) para que los logs de tu app también lleguen a Sentinela.
+ * Y súmalo a tu "stack" (LOG_STACK=stack,nocwise en .env, o directamente
+ * en la config) para que los logs de tu app también lleguen a Nocwise.
  */
-class SentinelaLogChannelFactory
+class NocwiseLogChannelFactory
 {
     public function __invoke(array $config): Logger
     {
-        $client = app(SentinelaClient::class);
-        $level = $config['level'] ?? config('sentinela.min_level', 'error');
+        $client = app(NocwiseClient::class);
+        $level = $config['level'] ?? config('nocwise.min_level', 'error');
 
-        $logger = new Logger('sentinela');
-        $logger->pushHandler(new SentinelaLogHandler($client, $this->resolveLevel($level)));
+        $logger = new Logger('nocwise');
+        $logger->pushHandler(new NocwiseLogHandler($client, $this->resolveLevel($level)));
 
         return $logger;
     }

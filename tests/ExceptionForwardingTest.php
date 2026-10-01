@@ -1,6 +1,6 @@
 <?php
 
-namespace Sentinela\LaravelClient\Tests;
+namespace Nocwise\LaravelClient\Tests;
 
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -11,7 +11,7 @@ class ExceptionForwardingTest extends TestCase
 {
     public function test_an_exception_logged_by_laravels_default_reporting_is_forwarded_automatically(): void
     {
-        Http::fake(['sentinela.test/*' => Http::response('', 200)]);
+        Http::fake(['nocwise.test/*' => Http::response('', 200)]);
 
         try {
             throw new RuntimeException('fallo automático');
@@ -36,7 +36,7 @@ class ExceptionForwardingTest extends TestCase
 
     public function test_it_is_not_forwarded_when_report_exceptions_is_disabled(): void
     {
-        config(['sentinela.report_exceptions' => false]);
+        config(['nocwise.report_exceptions' => false]);
         Http::fake();
 
         try {

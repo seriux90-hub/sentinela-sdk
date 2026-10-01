@@ -1,20 +1,20 @@
 <?php
 
-namespace Sentinela\LaravelClient\Logging;
+namespace Nocwise\LaravelClient\Logging;
 
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Level;
 use Monolog\LogRecord;
-use Sentinela\LaravelClient\SentinelaClient;
+use Nocwise\LaravelClient\NocwiseClient;
 
 /**
- * Handler de Monolog que reenvía cada registro al cliente de Sentinela.
+ * Handler de Monolog que reenvía cada registro al cliente de Nocwise.
  * Se añade a un canal (normalmente dentro del "stack" de logging.php) para
  * que cualquier Log::error(...)/report(...) de la app llegue también aquí.
  */
-class SentinelaLogHandler extends AbstractProcessingHandler
+class NocwiseLogHandler extends AbstractProcessingHandler
 {
-    public function __construct(private SentinelaClient $client, int|string|Level $level = Level::Error)
+    public function __construct(private NocwiseClient $client, int|string|Level $level = Level::Error)
     {
         parent::__construct($level);
     }

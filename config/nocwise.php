@@ -9,19 +9,19 @@ return [
     | Si es false, o si falta la api_key/endpoint, el cliente no hace nada
     | (no-op) — nunca debe romper ni ralentizar la app del proyecto.
     */
-    'enabled' => env('SENTINELA_ENABLED', true),
+    'enabled' => env('NOCWISE_ENABLED', true),
 
     /*
     |--------------------------------------------------------------------
     | API key y endpoint
     |--------------------------------------------------------------------
-    | api_key: la de tu proyecto en Sentinela (Integraciones -> API key).
-    | endpoint: la URL base de TU instancia de Sentinela (cada cliente
+    | api_key: la de tu proyecto en Nocwise (Integraciones -> API key).
+    | endpoint: la URL base de TU instancia de Nocwise (cada cliente
     | puede tener la suya, por eso es configurable y no está hardcodeada).
     */
-    'api_key' => env('SENTINELA_KEY'),
+    'api_key' => env('NOCWISE_KEY'),
 
-    'endpoint' => env('SENTINELA_URL', 'https://sentinela.example.com'),
+    'endpoint' => env('NOCWISE_URL', 'https://nocwise.example.com'),
 
     /*
     |--------------------------------------------------------------------
@@ -33,14 +33,14 @@ return [
     | sí (eso lo decide siempre el servidor) — ver el README, sección
     | "Seguridad".
     */
-    'signing_secret' => env('SENTINELA_SIGNING_SECRET'),
+    'signing_secret' => env('NOCWISE_SIGNING_SECRET'),
 
     /*
     |--------------------------------------------------------------------
     | Entorno reportado
     |--------------------------------------------------------------------
     */
-    'environment' => env('SENTINELA_ENVIRONMENT', env('APP_ENV', 'production')),
+    'environment' => env('NOCWISE_ENVIRONMENT', env('APP_ENV', 'production')),
 
     /*
     |--------------------------------------------------------------------
@@ -49,7 +49,7 @@ return [
     | Cualquier nivel de Monolog/PSR-3: debug, info, notice, warning,
     | error, critical, alert, emergency.
     */
-    'min_level' => env('SENTINELA_MIN_LEVEL', 'error'),
+    'min_level' => env('NOCWISE_MIN_LEVEL', 'error'),
 
     /*
     |--------------------------------------------------------------------
@@ -58,14 +58,14 @@ return [
     | Fracción de eventos que se envían realmente, entre 0.0 y 1.0. Útil
     | para no saturar la cuota del plan en apps muy ruidosas. 1.0 = todos.
     */
-    'sample_rate' => (float) env('SENTINELA_SAMPLE_RATE', 1.0),
+    'sample_rate' => (float) env('NOCWISE_SAMPLE_RATE', 1.0),
 
     /*
     |--------------------------------------------------------------------
     | Captura de excepciones no controladas
     |--------------------------------------------------------------------
     */
-    'report_exceptions' => env('SENTINELA_REPORT_EXCEPTIONS', true),
+    'report_exceptions' => env('NOCWISE_REPORT_EXCEPTIONS', true),
 
     /*
     |--------------------------------------------------------------------
@@ -77,14 +77,14 @@ return [
     | suele ejecutarse en mitad de una petición real del usuario (p. ej. al
     | reportar una excepción), así que cada reintento añade timeout+backoff
     | de espera SÍNCRONA a esa respuesta. Sólo súbelo si tienes claro que
-    | asumes ese coste (o si llamas a Sentinela desde un job en cola).
+    | asumes ese coste (o si llamas a Nocwise desde un job en cola).
     | retry_backoff_ms: espera entre reintentos, en milisegundos.
     */
-    'timeout' => (float) env('SENTINELA_TIMEOUT', 2.0),
+    'timeout' => (float) env('NOCWISE_TIMEOUT', 2.0),
 
-    'retries' => (int) env('SENTINELA_RETRIES', 0),
+    'retries' => (int) env('NOCWISE_RETRIES', 0),
 
-    'retry_backoff_ms' => (int) env('SENTINELA_RETRY_BACKOFF_MS', 100),
+    'retry_backoff_ms' => (int) env('NOCWISE_RETRY_BACKOFF_MS', 100),
 
     /*
     |--------------------------------------------------------------------
@@ -92,11 +92,11 @@ return [
     |--------------------------------------------------------------------
     | Si el envío falla por red (timeout, conexión rechazada...), se deja
     | de intentar durante esta cantidad de segundos — evita que una caída
-    | de Sentinela añada el timeout completo a cada log que ocurra mientras
+    | de Nocwise añada el timeout completo a cada log que ocurra mientras
     | tanto. 0 desactiva el circuit breaker (siempre lo intenta). Usa el
     | driver de caché por defecto de la app (config/cache.php).
     */
-    'circuit_breaker_seconds' => (int) env('SENTINELA_CIRCUIT_BREAKER_SECONDS', 30),
+    'circuit_breaker_seconds' => (int) env('NOCWISE_CIRCUIT_BREAKER_SECONDS', 30),
 
     /*
     |--------------------------------------------------------------------
@@ -106,9 +106,9 @@ return [
     | (canal 'single') en vez de enviarlo — útil para probar la
     | configuración sin gastar cuota ni depender de red.
     */
-    'debug' => env('SENTINELA_DEBUG', false),
+    'debug' => env('NOCWISE_DEBUG', false),
 
-    'dry_run' => env('SENTINELA_DRY_RUN', false),
+    'dry_run' => env('NOCWISE_DRY_RUN', false),
 
     /*
     |--------------------------------------------------------------------

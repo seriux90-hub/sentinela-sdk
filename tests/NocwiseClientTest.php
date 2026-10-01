@@ -1,28 +1,28 @@
 <?php
 
-namespace Sentinela\LaravelClient\Tests;
+namespace Nocwise\LaravelClient\Tests;
 
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
-use Sentinela\LaravelClient\Facades\Sentinela;
-use Sentinela\LaravelClient\SentinelaClient;
+use Nocwise\LaravelClient\Facades\Nocwise;
+use Nocwise\LaravelClient\NocwiseClient;
 
-class SentinelaClientTest extends TestCase
+class NocwiseClientTest extends TestCase
 {
     public function test_it_sends_the_expected_payload_with_api_key_and_signature_headers(): void
     {
-        Http::fake(['sentinela.test/*' => Http::response('', 200)]);
+        Http::fake(['nocwise.test/*' => Http::response('', 200)]);
 
-        Sentinela::capture('error', 'Algo falló', ['user_id' => 42]);
+        Nocwise::capture('error', 'Algo falló', ['user_id' => 42]);
 
         Http::assertSent(function (Request $request) {
-            return $request->url() === 'https://sentinela.test/api/logs'
+            return $request->url() === 'https://nocwise.test/api/logs'
                 && $request->hasHeader('X-API-Key', 'test-api-key')
-                && $request->hasHeader('X-Sentinela-Signature')
-                && $request->hasHeader('X-Sentinela-Timestamp')
-                && $request->hasHeader('X-Sentinela-Nonce')
+                && $request->hasHeader('X-Nocwise-Signature')
+                && $request->hasHeader('X-Nocwise-Timestamp')
+                && $request->hasHeader('X-Nocwise-Nonce')
                 && $request['level'] === 'error'
                 && $request['message'] === 'Algo falló'
                 && $request['context']['user_id'] === 42;
@@ -31,9 +31,9 @@ class SentinelaClientTest extends TestCase
 
     public function test_it_scrubs_pii_before_sending(): void
     {
-        Http::fake(['sentinela.test/*' => Http::response('', 200)]);
+        Http::fake(['nocwise.test/*' => Http::response('', 200)]);
 
-        Sentinela::capture('error', 'Login fallido', ['password' => 'hunter2']);
+        Nocwise::capture('error', 'Login fallido', ['password' => 'hunter2']);
 
         Http::assertSent(fn (Request $request) => $request['context']['password'] === '[redacted]');
     }
@@ -41,9 +41,9 @@ class SentinelaClientTest extends TestCase
     public function test_it_does_nothing_when_disabled(): void
     {
         Http::fake();
-        config(['sentinela.enabled' => false]);
+        config(['nocwise.enabled' => false]);
 
-        Sentinela::capture('error', 'x');
+        Nocwise::capture('error', 'x');
 
         Http::assertNothingSent();
     }
@@ -51,9 +51,9 @@ class SentinelaClientTest extends TestCase
     public function test_it_does_nothing_when_the_api_key_is_missing(): void
     {
         Http::fake();
-        config(['sentinela.api_key' => null]);
+        config(['nocwise.api_key' => null]);
 
-        Sentinela::capture('error', 'x');
+        Nocwise::capture('error', 'x');
 
         Http::assertNothingSent();
     }
@@ -62,26 +62,26 @@ class SentinelaClientTest extends TestCase
     {
         Http::fake(fn () => throw new RuntimeException('connection refused'));
 
-        Sentinela::capture('error', 'x');
+        Nocwise::capture('error', 'x');
 
         $this->assertTrue(true, 'capture() no debe lanzar ninguna excepción');
     }
 
     public function test_it_never_throws_on_a_server_error_response(): void
     {
-        Http::fake(['sentinela.test/*' => Http::response('boom', 500)]);
+        Http::fake(['nocwise.test/*' => Http::response('boom', 500)]);
 
-        Sentinela::capture('error', 'x');
+        Nocwise::capture('error', 'x');
 
         $this->assertTrue(true, 'capture() no debe lanzar ninguna excepción');
     }
 
     public function test_it_does_not_retry_on_a_4xx_response(): void
     {
-        Http::fake(['sentinela.test/*' => Http::response('nope', 402)]);
+        Http::fake(['nocwise.test/*' => Http::response('nope', 402)]);
 
-        config(['sentinela.retries' => 3]);
-        Sentinela::capture('error', 'x');
+        config(['nocwise.retries' => 3]);
+        Nocwise::capture('error', 'x');
 
         Http::assertSentCount(1);
     }
@@ -94,9 +94,9 @@ class SentinelaClientTest extends TestCase
 
             throw new RuntimeException('timeout');
         });
-        config(['sentinela.retries' => 2, 'sentinela.retry_backoff_ms' => 0]);
+        config(['nocwise.retries' => 2, 'nocwise.retry_backoff_ms' => 0]);
 
-        Sentinela::capture('error', 'x');
+        Nocwise::capture('error', 'x');
 
         $this->assertSame(3, $calls);
     }
@@ -104,9 +104,9 @@ class SentinelaClientTest extends TestCase
     public function test_sample_rate_zero_never_sends(): void
     {
         Http::fake();
-        config(['sentinela.sample_rate' => 0.0]);
+        config(['nocwise.sample_rate' => 0.0]);
 
-        Sentinela::capture('error', 'x');
+        Nocwise::capture('error', 'x');
 
         Http::assertNothingSent();
     }
@@ -114,21 +114,21 @@ class SentinelaClientTest extends TestCase
     public function test_dry_run_does_not_send_over_the_network(): void
     {
         Http::fake();
-        config(['sentinela.dry_run' => true]);
+        config(['nocwise.dry_run' => true]);
 
-        Sentinela::capture('error', 'x');
+        Nocwise::capture('error', 'x');
 
         Http::assertNothingSent();
     }
 
     public function test_report_exception_includes_class_file_line_and_trace(): void
     {
-        Http::fake(['sentinela.test/*' => Http::response('', 200)]);
+        Http::fake(['nocwise.test/*' => Http::response('', 200)]);
 
         try {
             throw new RuntimeException('kaboom');
         } catch (RuntimeException $e) {
-            Sentinela::reportException($e);
+            Nocwise::reportException($e);
         }
 
         Http::assertSent(function (Request $request) {
@@ -141,11 +141,11 @@ class SentinelaClientTest extends TestCase
 
     public function test_is_configured_reflects_live_config_changes(): void
     {
-        $client = $this->app->make(SentinelaClient::class);
+        $client = $this->app->make(NocwiseClient::class);
 
         $this->assertTrue($client->isConfigured());
 
-        config(['sentinela.enabled' => false]);
+        config(['nocwise.enabled' => false]);
         $this->assertFalse($client->isConfigured());
     }
 
@@ -160,7 +160,7 @@ class SentinelaClientTest extends TestCase
         // json_encode(), así que a veces sí es codificable y el test es
         // inestable entre versiones (así se detectó, con CI en verde en 8.2
         // y en rojo en 8.3 para el mismo commit).
-        Sentinela::capture('error', 'x', ['bad' => NAN]);
+        Nocwise::capture('error', 'x', ['bad' => NAN]);
 
         Http::assertNothingSent();
     }
@@ -171,17 +171,17 @@ class SentinelaClientTest extends TestCase
     {
         Http::fake(fn () => throw new RuntimeException('connection refused'));
 
-        Sentinela::capture('error', 'first failure');
+        Nocwise::capture('error', 'first failure');
 
-        $this->assertTrue(Cache::get('sentinela:circuit-open'));
+        $this->assertTrue(Cache::get('nocwise:circuit-open'));
     }
 
     public function test_no_request_is_attempted_while_the_circuit_is_open(): void
     {
         Http::fake();
-        Cache::put('sentinela:circuit-open', true, 30);
+        Cache::put('nocwise:circuit-open', true, 30);
 
-        Sentinela::capture('error', 'should be skipped');
+        Nocwise::capture('error', 'should be skipped');
 
         Http::assertNothingSent();
     }
@@ -189,37 +189,37 @@ class SentinelaClientTest extends TestCase
     public function test_the_circuit_breaker_can_be_disabled(): void
     {
         Http::fake(fn () => throw new RuntimeException('connection refused'));
-        config(['sentinela.circuit_breaker_seconds' => 0]);
+        config(['nocwise.circuit_breaker_seconds' => 0]);
 
-        Sentinela::capture('error', 'first failure');
+        Nocwise::capture('error', 'first failure');
 
-        $this->assertFalse(Cache::has('sentinela:circuit-open'));
+        $this->assertFalse(Cache::has('nocwise:circuit-open'));
     }
 
     public function test_a_successful_send_does_not_open_the_circuit(): void
     {
-        Http::fake(['sentinela.test/*' => Http::response('', 200)]);
+        Http::fake(['nocwise.test/*' => Http::response('', 200)]);
 
-        Sentinela::capture('error', 'ok');
+        Nocwise::capture('error', 'ok');
 
-        $this->assertFalse(Cache::has('sentinela:circuit-open'));
+        $this->assertFalse(Cache::has('nocwise:circuit-open'));
     }
 
     public function test_a_rejected_4xx_response_does_not_open_the_circuit(): void
     {
-        Http::fake(['sentinela.test/*' => Http::response('nope', 402)]);
+        Http::fake(['nocwise.test/*' => Http::response('nope', 402)]);
 
-        Sentinela::capture('error', 'quota exceeded');
+        Nocwise::capture('error', 'quota exceeded');
 
-        $this->assertFalse(Cache::has('sentinela:circuit-open'));
+        $this->assertFalse(Cache::has('nocwise:circuit-open'));
     }
 
     public function test_it_never_throws_if_the_cache_driver_itself_is_broken(): void
     {
-        Http::fake(['sentinela.test/*' => Http::response('', 200)]);
+        Http::fake(['nocwise.test/*' => Http::response('', 200)]);
         Cache::shouldReceive('get')->andThrow(new RuntimeException('redis is down'));
 
-        Sentinela::capture('error', 'x');
+        Nocwise::capture('error', 'x');
 
         $this->assertTrue(true, 'capture() no debe lanzar ninguna excepción aunque falle la caché');
     }

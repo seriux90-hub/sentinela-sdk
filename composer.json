@@ -1,13 +1,13 @@
 {
-    "name": "sentinela/laravel-client",
-    "description": "Cliente oficial de Sentinela para Laravel: captura logs y excepciones y las envía a tu instancia de Sentinela.",
+    "name": "nocwise/laravel-client",
+    "description": "Cliente oficial de Nocwise para Laravel: captura logs y excepciones y las envía a tu instancia de Nocwise.",
     "type": "library",
     "license": "MIT",
-    "keywords": ["sentinela", "laravel", "logging", "monitoring", "error-tracking"],
-    "homepage": "https://github.com/seriux90-hub/sentinela-sdk",
+    "keywords": ["nocwise", "laravel", "logging", "monitoring", "error-tracking"],
+    "homepage": "https://github.com/seriux90-hub/nocwise-sdk",
     "authors": [
         {
-            "name": "Sentinela"
+            "name": "Nocwise"
         }
     ],
     "require": {
@@ -22,21 +22,21 @@
     },
     "autoload": {
         "psr-4": {
-            "Sentinela\\LaravelClient\\": "src/"
+            "Nocwise\\LaravelClient\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Sentinela\\LaravelClient\\Tests\\": "tests/"
+            "Nocwise\\LaravelClient\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Sentinela\\LaravelClient\\SentinelaServiceProvider"
+                "Nocwise\\LaravelClient\\NocwiseServiceProvider"
             ],
             "aliases": {
-                "Sentinela": "Sentinela\\LaravelClient\\Facades\\Sentinela"
+                "Nocwise": "Nocwise\\LaravelClient\\Facades\\Nocwise"
             }
         }
     },

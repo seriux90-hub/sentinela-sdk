@@ -1,8 +1,8 @@
 <?php
 
-namespace Sentinela\LaravelClient\Tests;
+namespace Nocwise\LaravelClient\Tests;
 
-use Sentinela\LaravelClient\Support\PayloadSigner;
+use Nocwise\LaravelClient\Support\PayloadSigner;
 
 class PayloadSignerTest extends TestCase
 {
@@ -32,12 +32,12 @@ class PayloadSignerTest extends TestCase
 
         $headers = $signer->headersFor('{"a":1}', 'my-secret');
 
-        $this->assertArrayHasKey('X-Sentinela-Timestamp', $headers);
-        $this->assertArrayHasKey('X-Sentinela-Nonce', $headers);
-        $this->assertArrayHasKey('X-Sentinela-Signature', $headers);
+        $this->assertArrayHasKey('X-Nocwise-Timestamp', $headers);
+        $this->assertArrayHasKey('X-Nocwise-Nonce', $headers);
+        $this->assertArrayHasKey('X-Nocwise-Signature', $headers);
         $this->assertSame(
-            hash_hmac('sha256', "{$headers['X-Sentinela-Timestamp']}.{$headers['X-Sentinela-Nonce']}.".'{"a":1}', 'my-secret'),
-            $headers['X-Sentinela-Signature'],
+            hash_hmac('sha256', "{$headers['X-Nocwise-Timestamp']}.{$headers['X-Nocwise-Nonce']}.".'{"a":1}', 'my-secret'),
+            $headers['X-Nocwise-Signature'],
         );
     }
 
@@ -48,6 +48,6 @@ class PayloadSignerTest extends TestCase
         $a = $signer->headersFor('{"a":1}', 'my-secret');
         $b = $signer->headersFor('{"a":1}', 'my-secret');
 
-        $this->assertNotSame($a['X-Sentinela-Nonce'], $b['X-Sentinela-Nonce']);
+        $this->assertNotSame($a['X-Nocwise-Nonce'], $b['X-Nocwise-Nonce']);
     }
 }
